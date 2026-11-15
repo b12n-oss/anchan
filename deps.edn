@@ -1,0 +1,21 @@
+{:paths ["src"]
+
+ ;; VTE is loaded the first time a terminal is made (anchan.vte), so nothing
+ ;; is declared under :jolt/native: a machine without VTE can still require
+ ;; the library and ask what is missing.
+
+ :aliases {:test {:extra-paths ["test"]}
+           :dev {:extra-paths ["dev" "examples"]}}
+
+ :tasks
+ {test
+  {:doc "Run the unit tests (no display, no VTE needed)"
+   :task (shell "jolt" "-A:test" "-m" "anchan.test-runner")}
+
+  selftest
+  {:doc "Open a window and drive real terminals through VTE (needs a display and VTE)"
+   :task (shell "jolt" "-A:dev" "-m" "anchan-dev.selftest")}
+
+  shell
+  {:doc "Run the example: your shell in a window"
+   :task (shell "jolt" "-A:dev" "-m" "shell")}}}
