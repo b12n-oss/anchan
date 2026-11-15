@@ -51,6 +51,20 @@ Call them on the GTK thread.
 [Jonquil](https://github.com/b12n-oss/jonquil) is the first program that
 will use it.
 
+## Using it
+
+Add it to `deps.edn` as a git dependency, pinned to a release tag and the
+commit that tag names:
+
+```clojure
+io.github.b12n-oss/anchan {:git/url "https://github.com/b12n-oss/anchan.git"
+                           :git/tag "v0.1.0" :git/sha "<the tag's commit>"}
+```
+
+The guide in [docs/guide](docs/guide/index.md) covers the interface, writing
+a backend, and how a release is cut. `CHANGELOG.md` lists what each release
+holds.
+
 ## Trying it
 
 You need Jolt, GTK 4 and VTE's GTK 4 build (`brew install vte3` on a Mac).
@@ -63,6 +77,9 @@ jolt selftest   # opens a window and drives real terminals through VTE
 
 `jolt selftest` starts shells, reads what they print, checks exit codes,
 stops one while the app runs and checks its process is gone.
+
+`jolt verify` runs what CI runs: clj-kondo, the clojure-lsp format check,
+the jolt-metrics gate and the unit tests. `jolt info` lists every task.
 
 ## One thing VTE can't take
 

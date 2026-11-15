@@ -1,0 +1,60 @@
+name: release
+
+# Publishes a GitHub Release when a version tag (v0.1.0) is pushed. Anchan is
+# a source library: a program uses it as a deps.edn git dependency pinned to a
+# tag and its commit, so there's nothing to build or upload. What this adds is
+# order. ci.yml runs first against the tagged commit, then the tag is checked
+# to be on main, and only then is the release made, with CHANGELOG.md's
+# section for that version as its notes. A tag whose checks fail makes no
+# release; fix forward and tag the next version.
+#
+# Cutting one is docs/guide/contributing.md's "Releasing".
+
+"on":
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    name: GitHub Release
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: The tag is on main
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor "$TAG" origin/main; then
+            echo "::error::$TAG isn't on main; tag a commit that has been merged"
+            exit 1
+          fi
+
+      - name: Install jolt
+        uses: jlt-commons/setup-jolt@v1
+        with:
+          version: "0.8.27"
+
+      - name: The notes, from CHANGELOG.md
+        env:
+          TAG: ${{ github.ref_name }}
+        run: jolt release:notes "$TAG" > notes.md
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: gh release create "$TAG" --verify-tag --title "Anchan $TAG" --notes-file notes.md

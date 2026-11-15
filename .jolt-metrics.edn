@@ -1,0 +1,6 @@
+;; jolt-metrics config, read by `jolt metrics` (a report, which never fails)
+;; and by `jolt metrics:gate` (which does). No :test-paths: a path named there
+;; is measured but never queued, so the gate (ci/metrics-allow.edn) would
+;; check nothing in it. Left out: build output, tool caches and the docs.
+{:exclude ["target/**" "out/**" ".clj-kondo/**" ".lsp/**" ".cpcache/**" "docs/**"]
+ :test-paths []}

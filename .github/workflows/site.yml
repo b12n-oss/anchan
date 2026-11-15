@@ -1,0 +1,38 @@
+name: site
+
+# Builds the documentation site from docs/guide and publishes it to GitHub
+# Pages at https://b12n-oss.github.io/anchan/. The build is the shared one in
+# jlt-commons/ci-builds; what stays here is this project's own: docs/,
+# docs/site.edn, the base path below and the assertions in docs/check-site.sh.
+#
+# Builds on every pull request and publishes from main. The deploy step needs
+# GitHub Pages turned on for this repo (Settings, Pages, source "GitHub
+# Actions"); until then the build still runs and the deploy fails.
+
+"on":
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Deploys must not race; pull request builds cancel their own earlier runs.
+concurrency:
+  group: site-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  site:
+    uses: jlt-commons/ci-builds/.github/workflows/site.yml@main
+    with:
+      base-path: /anchan
+      # v0.4.5 is the engine Malai and Jonquil build with; it reads under
+      # Jolt 0.8.25 and later.
+      docs-engine-ref: v0.4.5
+      jolt-version: "0.8.27"
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
