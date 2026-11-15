@@ -72,7 +72,22 @@ program on macOS, and the program dies at once. A limit of 262144 works and
 starts a program, and leaves a lower limit and the hard limit alone
 (`anchan.limits`).
 
+## The name
+
+Anchan (อัญชัน) is *Clitoria ternatea*, the butterfly pea: a climbing vine in
+the pea family with deep blue flowers, sometimes white, and flat green pods.
+In Thailand the flowers are steeped to colour drinks and rice blue, and a
+squeeze of lime turns the blue to purple.
+
+<p align="center"><img src="docs/images/anchan-blanco.jpg" alt="Botanical plate of Clitoria ternatea: a climbing stem with paired oval leaves, one deep blue flower and one white flower, and long green pods" width="240"></p>
+
+*Clitoria ternatea* from Francisco Manuel Blanco's *Flora de Filipinas*, Gran
+edición, Atlas II (1880 to 1883), cleaned up and cropped by a Commons editor.
+Public domain, via
+[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Clitoria_ternatea_Blanco2.301-cropped.jpg).
+The logo in `docs/images/logo.svg` was drawn for this project.
+
 ## License
 
 Eclipse Public License 2.0, see [LICENSE](LICENSE). VTE has its own
-license.
+license. The botanical plate in "The name" is public domain.
