@@ -1,0 +1,10 @@
+;; jolt.ffi's macros (defcfn and the with-* forms) are covered by the config
+;; jolt exports at clj-kondo.exports/jolt-lang/jolt/, copied into
+;; .clj-kondo/imports/jolt-lang/jolt/, which clj-kondo loads on its own.
+;; Without it every defcfn reads as an unresolved symbol (32 errors, measured
+;; 2026-11-15). Refresh it from a jolt checkout:
+;;
+;;   clj-kondo --lint ~/dev/jolt --dependencies --copy-configs
+;;
+;; (that also copies babashka/sci's export; delete .clj-kondo/imports/babashka).
+{}

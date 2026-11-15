@@ -1,0 +1,162 @@
+name: ci
+
+# Every check a change has to pass, in one place, run on each push to main,
+# each pull request, and by release.yml against the commit a tag names. The
+# last job, `ci ok`, fails unless every lane before it passed, so a branch rule
+# on main can require that one status and stay as it is when lanes change.
+#
+# Each lane is a `jolt <task>` from deps.edn, so a failure here reproduces with
+# the same command on a laptop. `jolt verify` runs all of them but the
+# attribution check.
+
+"on":
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/') }}
+
+env:
+  # The Jolt release the lanes run on. Move it in a reviewed commit, not by
+  # tracking the latest, so a Jolt release can't turn a quiet tree red.
+  JOLT_VERSION: "0.8.27"
+
+jobs:
+  lint:
+    name: clj-kondo and format check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      # The Clojure CLI is there for clojure-lsp, which reads deps.edn's
+      # classpath with it. Nothing here runs on the JVM.
+      - name: Set up the Clojure CLI and clj-kondo
+        uses: DeLaGuardo/setup-clojure@13.6.1
+        with:
+          cli: latest
+          clj-kondo: latest
+
+      # setup-clojure has no clojure-lsp input, so it comes from its own
+      # action, pinned to the version the format check was last run with.
+      - name: Set up clojure-lsp
+        uses: clojure-lsp/setup-clojure-lsp@v1.0.3
+        with:
+          clojure-lsp-version: 2026.10.15-11.42.38
+
+      - name: Install jolt
+        uses: jlt-commons/setup-jolt@v1
+        with:
+          version: ${{ env.JOLT_VERSION }}
+
+      - name: jolt lint:strict
+        run: jolt lint:strict
+
+      - name: jolt format:check
+        run: jolt format:check
+
+  # A critical jolt-metrics finding, or unused code ci/metrics-allow.edn
+  # doesn't list, fails the lane. The report goes to the job summary.
+  metrics:
+    name: jolt-metrics gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # churn and hotspots come from the git history
+          fetch-depth: 0
+
+      - name: Install jolt
+        uses: jlt-commons/setup-jolt@v1
+        with:
+          version: ${{ env.JOLT_VERSION }}
+
+      - name: jolt metrics:gate
+        run: jolt metrics:gate
+
+      - name: The report
+        if: always()
+        run: |
+          jolt metrics target/metrics-report.md --top 30 >/dev/null
+          awk '/^## Cleanup candidates/{exit} {print}' target/metrics-report.md >> "$GITHUB_STEP_SUMMARY"
+
+  # The unit tests need no display and no VTE, only libc (anchan.limits), so
+  # they run on both systems Anchan is meant for. `jolt selftest` drives real
+  # terminals in a window and stays a local run for now.
+  test:
+    name: unit tests (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install jolt
+        uses: jlt-commons/setup-jolt@v1
+        with:
+          version: ${{ env.JOLT_VERSION }}
+
+      - name: jolt test
+        run: jolt test
+
+  # No AI assistant attribution in commit messages or the pull request
+  # description (ci/attributioncheck.sh lists what counts).
+  attribution:
+    name: no AI attribution in commits
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: commits in range
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ "$EVENT" = pull_request ]; then
+            range="origin/$BASE_REF..HEAD"
+          elif [ -n "$BEFORE" ] && ! echo "$BEFORE" | grep -q '^0*$' && git cat-file -e "$BEFORE" 2>/dev/null; then
+            range="$BEFORE..HEAD"
+          elif [ "$(git rev-list --count HEAD)" -gt 20 ]; then
+            # a new branch, a tag, a force-push or a manual run: the recent commits
+            range="HEAD~20..HEAD"
+          else
+            range=HEAD
+          fi
+          sh ci/attributioncheck.sh "$range"
+
+      - name: pull request description
+        if: github.event_name == 'pull_request'
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+        run: printf '%s\n' "$BODY" | sh ci/attributioncheck.sh --text
+
+  ok:
+    name: ci ok
+    if: always()
+    needs: [lint, metrics, test, attribution]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Every lane passed
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "$RESULTS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          bad=$(echo "$RESULTS" | jq -r 'to_entries[] | select(.value.result != "success") | .key' | tr '\n' ' ')
+          if [ -n "$bad" ]; then echo "::error::not passed: $bad"; exit 1; fi
+          echo "every lane passed"

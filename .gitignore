@@ -1,3 +1,9 @@
 out/
 *.png
 !docs/images/*.png
+.cpcache/
+.clj-kondo/.cache/
+.lsp/.cache/
+target/
+/.jolt/
+_site/

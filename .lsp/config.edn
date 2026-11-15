@@ -1,0 +1,4 @@
+;; clojure-lsp's format check (jolt format:check) matches the style already in
+;; the tree: short maps stay on one line, as {:array array :strings strings}.
+;; The default splits every map one key-value pair per line.
+{:cljfmt {:split-keypairs-over-multiple-lines? false}}
