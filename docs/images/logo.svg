@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-labelledby="title">
+  <title id="title">Anchan</title>
+  <!-- An anchan (butterfly pea, the double-flowered kind) seen from the
+       side: a fan of pointed indigo petals behind, three broad cupped ones
+       in front that overlap like a loose rose, two small ones curled at the
+       heart, and a green calyx on a short curling stalk. The white lines
+       are the gaps between petals. -->
+  <defs>
+    <linearGradient id="indigo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3D42B0"/>
+      <stop offset="1" stop-color="#24256F"/>
+    </linearGradient>
+    <linearGradient id="leaf" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3F8F4A"/>
+      <stop offset="1" stop-color="#2A6634"/>
+    </linearGradient>
+    <!-- petals are drawn pointing up from the flower's base at (64,78) -->
+    <path id="back" d="M64 78 C50 62 46 36 60 18 Q64 12 66 20 C80 38 78 62 64 78 Z"/>
+    <path id="front" d="M64 80 C44 76 38 56 46 40 C52 44 58 44 64 40 C70 44 76 44 82 40 C90 56 84 76 64 80 Z"/>
+    <path id="heart" d="M64 78 C54 72 52 60 58 50 C61 53 64 53 66 50 C73 60 72 72 64 78 Z"/>
+  </defs>
+  <g stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <!-- the stalk and its curl -->
+    <path d="M64 96 C64 106 67 111 63 117 C61 120 57 119 58 116" fill="none" stroke="#2A6634" stroke-width="3"/>
+    <!-- the back fan: five pointed petals -->
+    <g fill="url(#indigo)">
+      <use href="#back" transform="rotate(-62 64 78)"/>
+      <use href="#back" transform="rotate(62 64 78)"/>
+      <use href="#back" transform="rotate(-31 64 78)"/>
+      <use href="#back" transform="rotate(31 64 78)"/>
+      <use href="#back"/>
+    </g>
+    <!-- three broad petals in front, the middle one over the other two -->
+    <g fill="url(#indigo)">
+      <use href="#front" transform="rotate(-44 64 80)"/>
+      <use href="#front" transform="rotate(44 64 80)"/>
+      <use href="#front"/>
+    </g>
+    <!-- the heart: two small petals leaning together -->
+    <g fill="#2A2C86">
+      <use href="#heart" transform="rotate(-16 64 78)"/>
+      <use href="#heart" transform="rotate(16 64 78)"/>
+    </g>
+    <!-- the calyx: a cup and two sepals -->
+    <path d="M52 82 C56 78 72 78 76 82 C76 92 70 98 64 98 C58 98 52 92 52 82 Z" fill="url(#leaf)"/>
+    <path d="M64 98 C56 99 51 105 53 112 C59 110 63 105 64 98 Z" fill="url(#leaf)"/>
+    <path d="M64 98 C72 99 77 105 75 112 C69 110 65 105 64 98 Z" fill="url(#leaf)"/>
+  </g>
+</svg>
