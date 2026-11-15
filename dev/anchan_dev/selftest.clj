@@ -88,6 +88,28 @@
         [(and (:alive-before @seen) (contains? (:exit @seen) :signal))
          (select-keys @seen [:pid :alive-before :exit])]))))
 
+(defn- row-busy-tells-a-running-command-from-a-prompt
+  "A shell at its prompt isn't busy. While it runs sleep it is, and once
+  the sleep has ended it isn't again."
+  [{:keys [win]}]
+  (let [t (terminal-in! win)
+        seen (atom {})]
+    (anchan/start! t {:argv ["/bin/sh"] :dir "/tmp" :on-start #(swap! seen assoc :pid (:pid %))})
+    (fn []
+      (cond
+        (and (:pid @seen) (not (contains? @seen :idle)))
+        (when (str/includes? (anchan/text t) "$")
+          (swap! seen assoc :idle (anchan/busy? t))
+          (anchan/feed! t "sleep 1\n")
+          nil)
+
+        (and (contains? @seen :idle) (not (:during @seen)))
+        (do (when (anchan/busy? t) (swap! seen assoc :during true)) nil)
+
+        (and (:during @seen) (not (anchan/busy? t)))
+        (do (anchan/dispose! t)
+            [(false? (:idle @seen)) (select-keys @seen [:idle :during])])))))
+
 (defn- row-colors-and-font-are-taken
   "Setting colours (with and without a palette) and a font doesn't throw,
   and a short palette is refused."
@@ -120,6 +142,7 @@
    [:exit-code-is-reported row-exit-code-is-reported]
    [:a-missing-program-is-an-error row-a-missing-program-is-an-error]
    [:stop-ends-the-program-while-the-app-runs row-stop-ends-the-program-while-the-app-runs]
+   [:busy-tells-a-running-command-from-a-prompt row-busy-tells-a-running-command-from-a-prompt]
    [:colors-and-font-are-taken row-colors-and-font-are-taken]
    [:open-files-limit-is-under-the-ceiling row-open-files-limit-is-under-the-ceiling]])
 

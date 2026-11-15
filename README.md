@@ -39,6 +39,7 @@ behind the same functions.
 | `feed!` | Sends text to the program as if typed |
 | `text`, `size` | What the terminal shows, and its size in characters |
 | `pid`, `running?` | The program's process, while it runs |
+| `busy?` | Whether a shell is running a command, as against waiting at its prompt |
 | `copy!`, `paste!` | The selection to the clipboard, and back |
 | `set-colors!`, `set-font!` | `"#rrggbb"` colours with an optional 16-colour palette, and a font such as `"Menlo 13"` |
 | `stop!` | Hangs up the program |

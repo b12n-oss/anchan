@@ -64,6 +64,11 @@
 (ffi/defcfn g-free "g_free" [:pointer] :void)
 (ffi/defcfn g-signal-connect-data "g_signal_connect_data"
   [:pointer :string :pointer :pointer :pointer :int] :ulong)
+;; VtePty *vte_terminal_get_pty(VteTerminal*); int vte_pty_get_fd(VtePty*)
+(ffi/defcfn vte-terminal-get-pty "vte_terminal_get_pty" [:pointer] :pointer)
+(ffi/defcfn vte-pty-get-fd "vte_pty_get_fd" [:pointer] :int)
+;; unistd.h: pid_t tcgetpgrp(int fd), the terminal's foreground process group
+(ffi/defcfn c-tcgetpgrp "tcgetpgrp" [:int] :int)
 ;; signal.h: int kill(pid_t, int)
 (ffi/defcfn c-kill "kill" [:int :int] :int)
 
@@ -187,6 +192,17 @@
     (try (vte-terminal-set-font (:term @state) font)
          (finally (pango-font-description-free font)))))
 
+(defn- busy?
+  "True when the pty's foreground process group isn't the program's own:
+  the program (a shell) is a session leader whose group is its pid, and a
+  command it runs in the foreground gets a group of its own."
+  [state]
+  (when-let [pid (:pid @state)]
+    (let [pty (vte-terminal-get-pty (:term @state))]
+      (when-not (ffi/null? pty)
+        (let [group (c-tcgetpgrp (vte-pty-get-fd pty))]
+          (and (pos? group) (not= group pid)))))))
+
 (defn- stop! [state]
   (when-let [pid (:pid @state)]
     ;; VTE makes the program a session leader, so its process group is its
@@ -212,6 +228,7 @@
    :size (fn [state] {:columns (vte-terminal-get-column-count (:term @state))
                       :rows (vte-terminal-get-row-count (:term @state))})
    :pid (fn [state] (:pid @state))
+   :busy? busy?
    :copy! (fn [state] (vte-terminal-copy-clipboard-format (:term @state) FORMAT-TEXT))
    :paste! (fn [state] (vte-terminal-paste-clipboard (:term @state)))
    :set-colors! set-colors!

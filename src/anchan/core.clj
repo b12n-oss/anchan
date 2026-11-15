@@ -89,6 +89,13 @@
   [t]
   (some? (pid t)))
 
+(defn busy?
+  "True while the program is running something of its own in the
+  foreground: a shell that has started a command, as against one waiting
+  at its prompt. False when nothing runs, and when the backend can't tell."
+  [t]
+  (boolean ((op t :busy?) (:impl t))))
+
 (defn copy!
   "Copies the terminal's selection to the clipboard."
   [t]
