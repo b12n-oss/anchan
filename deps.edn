@@ -32,7 +32,7 @@
                     (str home "/dev/jlt-commons/docs-engine")
                     "../docs-engine"]
                    (remove nil?)
-                   (filter (fn [d] (fs/exists? (fs/file d "bb.edn"))))
+                   (filter (fn [d] (fs/exists? (fs/file d "src" "site" "core.clj"))))
                    first)))
           ;; The engine's build and clean run as `jolt run <task>` (bare
           ;; `jolt build` is jolt's own native build). Proxy vars cleared: the
